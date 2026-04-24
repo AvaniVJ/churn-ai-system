@@ -6,7 +6,7 @@ st.set_page_config(page_title="Churn AI System", layout="centered")
 
 # Title
 st.title("📊 Customer Churn Intelligence System")
-st.markdown("Predict customer churn and understand key factors instantly.")
+st.markdown("Predict customer churn and generate actionable business insights.")
 
 st.divider()
 
@@ -31,6 +31,7 @@ gender = st.selectbox("Gender", ["Male", "Female"])
 
 st.divider()
 
+# Predict
 if st.button("🚀 Predict Churn"):
 
     input_data = {
@@ -56,23 +57,25 @@ if st.button("🚀 Predict Churn"):
         st.divider()
         st.subheader("📈 Prediction Result")
 
+        # Prediction
         if result.get("prediction") == "Churn":
-            st.error("⚠️ Customer is likely to churn")
+            st.error("⚠️ High churn risk detected")
         else:
             st.success("✅ Customer is likely to stay")
 
+        # Confidence
         confidence = result.get("confidence", 0)
-        st.write(f"**Confidence Score:** {confidence}")
+        st.write(f"**Confidence Score:** {confidence:.2f}")
         st.progress(float(confidence))
 
-        # 🔥 NEW: Action Type
+        # 🔥 Action Strategy
         st.subheader("📌 Action Strategy")
-        st.info(result.get("action_type", "N/A"))
+        st.info(f"{result.get('action_type', 'N/A')} Strategy")
 
         # Actions
         st.subheader("🎯 Recommended Actions")
         for action in result.get("recommended_actions", []):
-            st.write(f"✅ {action}")
+            st.write(f"✔ {action}")
 
         # Explanation
         st.subheader("🧠 AI Explanation")
@@ -82,4 +85,4 @@ if st.button("🚀 Predict Churn"):
         st.error(f"❌ Error: {e}")
 
 st.divider()
-st.caption("🚀 Deployed AI decision system using ML + LLM reasoning")
+st.caption("🚀 AI-powered decision system combining ML predictions with business strategy intelligence")
