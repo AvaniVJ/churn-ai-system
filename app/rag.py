@@ -1,18 +1,28 @@
 from openai import OpenAI
 import os
 
-# Set your API key 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Safe API key handling
+api_key = os.getenv("OPENAI_API_KEY")
+
+if api_key:
+    client = OpenAI(api_key=api_key)
+else:
+    client = None
+
 
 def generate_explanation(data, prediction, reasons):
     try:
+        # If no API key → skip LLM safely
+        if client is None:
+            return "LLM unavailable (no API key)"
+
         prompt = f"""
         Prediction: {prediction}
         Key Factors: {", ".join(reasons)}
 
         Customer Data: {data}
 
-        Explain briefly why the customer will churn or not.
+        Explain why the customer will churn or not AND suggest 2-3 business actions to prevent churn.
         """
 
         response = client.chat.completions.create(
@@ -26,5 +36,5 @@ def generate_explanation(data, prediction, reasons):
 
         return response.choices[0].message.content
 
-    except Exception as e:
+    except Exception:
         return "LLM unavailable (quota or API issue)"

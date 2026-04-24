@@ -16,7 +16,19 @@ model, scaler = load_model()
 def home():
     return {"message": "Churn AI System Running"}
 
+def get_actions(reasons):
+    actions = []
 
+    if "Low engagement" in reasons:
+        actions.append("Send personalized offers")
+
+    if "High inactivity" in reasons:
+        actions.append("Trigger re-engagement email")
+
+    if "Low satisfaction" in reasons:
+        actions.append("Offer support or discount")
+
+    return actions if actions else ["No action needed"]
 @app.post("/predict")
 def predict(data: dict):
     try:
@@ -62,13 +74,16 @@ def predict(data: dict):
             )
         except Exception as e:
             explanation = f"LLM Error: {str(e)}"
+        
+        actions = get_actions(reasons)
 
         # Step 7: Return response
         return {
-            "prediction": "Churn" if prediction == 1 else "No Churn",
-            "confidence": round(float(prob), 2),
-            "key_factors": reasons,
-            "llm_explanation": explanation
+             "prediction": "Churn" if prediction == 1 else "No Churn",
+             "confidence": round(float(prob), 2),
+             "key_factors": reasons,
+             "recommended_actions": actions,
+             "llm_explanation": explanation
         }
 
     except Exception as e:

@@ -1,5 +1,6 @@
 import streamlit as st
-import requests
+from app.model import predict
+from app.preprocess import preprocess_input
 
 st.set_page_config(page_title="Churn AI System", layout="centered")
 
@@ -33,7 +34,7 @@ st.divider()
 # Predict button
 if st.button("🚀 Predict Churn"):
 
-    data = {
+    input_data = {
         "Age": age,
         "Income": income,
         "SpendingScore": spending,
@@ -45,58 +46,42 @@ if st.button("🚀 Predict Churn"):
         "Gender": gender
     }
 
-    st.write("📤 Sending data to API...")
-    st.json(data)
+    st.write("📤 Processing input data...")
+    st.json(input_data)
 
     try:
         with st.spinner("Analyzing customer behavior..."):
 
-            response = requests.post(
-                "http://127.0.0.1:8000/predict",
-                json=data,
-                timeout=10   # ⏱ prevents hanging
-            )
+            # 🔥 Direct pipeline (no API)
+            processed = preprocess_input(input_data)
+            result = predict(processed)
 
-        # ✅ Handle API response properly
-        if response.status_code == 200:
-            result = response.json()
+        st.divider()
+        st.subheader("📈 Prediction Result")
 
-            st.divider()
-            st.subheader("📈 Prediction Result")
-
-            # 🔥 Prediction display
-            if result.get("prediction") == "Churn":
-                st.error("⚠️ Customer is likely to churn")
-            else:
-                st.success("✅ Customer is likely to stay")
-
-            # 🔥 Confidence
-            confidence = result.get("confidence", 0)
-            st.write(f"**Confidence Score:** {confidence}")
-            st.progress(float(confidence))
-
-            # 🔥 Key factors
-            st.subheader("🔍 Key Factors")
-            for factor in result.get("key_factors", []):
-                st.write(f"👉 {factor}")
-
-            # 🔥 Explanation
-            st.subheader("🧠 AI Explanation")
-            st.info(result.get("llm_explanation", "No explanation available"))
-
+        # Prediction
+        if result.get("prediction") == "Churn":
+            st.error("⚠️ Customer is likely to churn")
         else:
-            st.error(f"❌ API Error: {response.status_code}")
-            st.text(response.text)
+            st.success("✅ Customer is likely to stay")
 
-    except requests.exceptions.ConnectionError:
-        st.error("❌ Cannot connect to backend. Make sure FastAPI is running.")
+        # Confidence
+        confidence = result.get("confidence", 0)
+        st.write(f"**Confidence Score:** {confidence}")
+        st.progress(float(confidence))
 
-    except requests.exceptions.Timeout:
-        st.error("⏱ Request timed out. Try again.")
+        # Actions
+        st.subheader("🎯 Recommended Actions")
+        for action in result.get("recommended_actions", []):
+            st.write(f"✅ {action}")
+
+        # Explanation
+        st.subheader("🧠 AI Explanation")
+        st.info(result.get("llm_explanation", "No explanation available"))
 
     except Exception as e:
-        st.error(f"Unexpected Error: {e}")
+        st.error(f"❌ Error: {e}")
 
 # Footer
 st.divider()
-st.caption("Built with ❤️ using ML + FastAPI + Streamlit")
+st.caption("🚀 Deployed AI decision system using ML + LLM reasoning")
