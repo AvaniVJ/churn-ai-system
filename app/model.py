@@ -1,6 +1,6 @@
 import joblib
+from app.rag import generate_explanation
 
-# Cache model + scaler (avoids reloading every time)
 model = None
 scaler = None
 
@@ -23,36 +23,68 @@ def predict(df):
     pred = model.predict(X)[0]
     prob = model.predict_proba(X)[0][1]
 
-    # Business logic
-    actions = generate_actions(pred)
+    prediction = "Churn" if pred == 1 else "No Churn"
+    confidence = float(prob)
+
+    # 🔥 Basic reasoning (rule-based signals)
+    reasons = []
+
+    if df["DaysSinceLastPurchase"].values[0] > 30:
+        reasons.append("High inactivity")
+
+    if df["ReviewScore"].values[0] < 3:
+        reasons.append("Low satisfaction")
+
+    if df["SessionTime"].values[0] < 100:
+        reasons.append("Low engagement")
+
+    if not reasons:
+        reasons.append("Stable engagement")
+
+    # 🔥 LLM explanation
+    explanation = generate_explanation(
+        data=df.to_dict(orient="records")[0],
+        prediction=prediction,
+        reasons=reasons,
+        confidence=confidence
+    )
+
+    # 🔥 Actions
+    actions = generate_actions(pred, confidence)
 
     result = {
-        "prediction": "Churn" if pred == 1 else "No Churn",
-        "confidence": float(prob),
+        "prediction": prediction,
+        "confidence": confidence,
         "recommended_actions": actions,
-        "llm_explanation": generate_explanation(pred, prob)
+        "llm_explanation": explanation
     }
 
     return result
 
 
-def generate_actions(pred):
+def generate_actions(pred, confidence):
     if pred == 1:
-        return [
-            "Send personalized retention offer",
-            "Trigger re-engagement campaign",
-            "Provide discount or loyalty incentive"
-        ]
+        if confidence > 0.7:
+            return [
+                "Send personalized retention offer",
+                "Provide discount or loyalty incentive",
+                "Trigger immediate re-engagement campaign"
+            ]
+        else:
+            return [
+                "Monitor customer behavior",
+                "Send targeted engagement communication",
+                "Offer limited-time incentives"
+            ]
     else:
-        return [
-            "Maintain engagement with regular updates",
-            "Upsell premium offerings",
-            "Encourage referrals"
-        ]
-
-
-def generate_explanation(pred, prob):
-    if pred == 1:
-        return f"Customer shows high churn risk with probability {round(prob, 2)} due to lower engagement signals."
-    else:
-        return f"Customer shows low churn risk with probability {round(prob, 2)} and stable engagement patterns."
+        if confidence < 0.4:
+            return [
+                "Customer is stable – no immediate action required",
+                "Maintain regular engagement"
+            ]
+        else:
+            return [
+                "Maintain engagement with regular updates",
+                "Explore upsell opportunities",
+                "Encourage referrals"
+            ]

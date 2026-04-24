@@ -1,7 +1,6 @@
 from openai import OpenAI
 import os
 
-# Safe API key handling
 api_key = os.getenv("OPENAI_API_KEY")
 
 if api_key:
@@ -10,19 +9,24 @@ else:
     client = None
 
 
-def generate_explanation(data, prediction, reasons):
+def generate_explanation(data, prediction, reasons, confidence):
     try:
-        # If no API key → skip LLM safely
         if client is None:
-            return "LLM unavailable (no API key)"
+            return generate_fallback_explanation(prediction, confidence)
 
         prompt = f"""
         Prediction: {prediction}
+        Confidence: {confidence}
         Key Factors: {", ".join(reasons)}
-
         Customer Data: {data}
 
-        Explain why the customer will churn or not AND suggest 2-3 business actions to prevent churn.
+        Tasks:
+        1. Explain why the customer is likely to churn or not.
+        2. If churn risk is high → suggest retention actions.
+        3. If churn risk is low → suggest engagement or no action.
+        4. If confidence is moderate (0.4–0.6) → suggest monitoring.
+
+        Keep response concise and business-focused.
         """
 
         response = client.chat.completions.create(
@@ -31,10 +35,23 @@ def generate_explanation(data, prediction, reasons):
                 {"role": "system", "content": "You are a business analyst."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=100
+            max_tokens=120
         )
 
-        return response.choices[0].message.content
+        return response.choices[0].message.content.strip()
 
     except Exception:
-        return "LLM unavailable (quota or API issue)"
+        return generate_fallback_explanation(prediction, confidence)
+
+
+def generate_fallback_explanation(prediction, confidence):
+    if prediction == "Churn":
+        if confidence > 0.7:
+            return "Customer shows high churn risk. Immediate retention actions recommended."
+        else:
+            return "Customer shows moderate churn risk. Monitor and engage strategically."
+    else:
+        if confidence < 0.4:
+            return "Customer is stable with low churn risk. No immediate action required."
+        else:
+            return "Customer is stable but should be monitored. Engagement and upsell opportunities can be explored."
