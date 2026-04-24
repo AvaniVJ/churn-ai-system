@@ -46,7 +46,7 @@ def predict(data: dict):
         prediction = "Churn" if pred == 1 else "No Churn"
         confidence = float(prob)
 
-        # 🔥 Reasons (aligned with model.py logic)
+        #  Reasons (aligned with model.py logic)
         reasons = []
 
         if df["DaysSinceLastPurchase"].values[0] > 30:
@@ -61,10 +61,10 @@ def predict(data: dict):
         if not reasons:
             reasons.append("Stable engagement")
 
-        # 🔥 Action classification
+        #  Action classification
         action_data = generate_actions(pred, confidence)
 
-        # 🔥 LLM explanation (updated signature)
+        #  LLM explanation (updated signature)
         explanation = generate_explanation(
             data=data,
             prediction=prediction,
