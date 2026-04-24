@@ -1,8 +1,5 @@
 from fastapi import FastAPI
-import numpy as np
-
-from app.model import load_model
-from app.utils import get_reason
+from app.model import load_model, generate_actions
 from app.preprocess import preprocess_input
 from app.rag import generate_explanation
 
@@ -14,79 +11,74 @@ model, scaler = load_model()
 
 @app.get("/")
 def home():
-    return {"message": "Churn AI System Running"}
+    return {"message": "Churn AI Decision System Running"}
 
-def get_actions(reasons):
-    actions = []
 
-    if "Low engagement" in reasons:
-        actions.append("Send personalized offers")
-
-    if "High inactivity" in reasons:
-        actions.append("Trigger re-engagement email")
-
-    if "Low satisfaction" in reasons:
-        actions.append("Offer support or discount")
-
-    return actions if actions else ["No action needed"]
 @app.post("/predict")
 def predict(data: dict):
     try:
-        # Step 1: Preprocess input
+        # Step 1: Preprocess
         df = preprocess_input(data)
 
-        # Required features (must match training)
         required_cols = [
             'Age','Income','SpendingScore','PurchaseAmount',
             'DaysSinceLastPurchase','Returns','ReviewScore',
             'SessionTime','Gender'
         ]
 
-        # Ensure all columns exist
         for col in required_cols:
             if col not in df:
                 df[col] = 0
 
-        # Extract features
-        features = df[required_cols].values
+        X = df[required_cols].values
 
         # Step 2: Scale
-        features_scaled = scaler.transform(features)
+        X_scaled = scaler.transform(X)
 
         # Step 3: Predict
-        prediction = model.predict(features_scaled)[0]
+        pred = model.predict(X_scaled)[0]
 
-        # Step 4: Safe probability
         try:
-            prob = model.predict_proba(features_scaled)[0][1]
+            prob = model.predict_proba(X_scaled)[0][1]
         except:
             prob = 0.5
 
-        # Step 5: Rule-based reasoning
-        reasons = get_reason(data)
+        prediction = "Churn" if pred == 1 else "No Churn"
+        confidence = float(prob)
 
-        # Step 6: LLM explanation (safe)
-        try:
-            explanation = generate_explanation(
-                data,
-                "Churn" if prediction == 1 else "No Churn",
-                reasons
-            )
-        except Exception as e:
-            explanation = f"LLM Error: {str(e)}"
-        
-        actions = get_actions(reasons)
+        # 🔥 Reasons (aligned with model.py logic)
+        reasons = []
 
-        # Step 7: Return response
+        if df["DaysSinceLastPurchase"].values[0] > 30:
+            reasons.append("High inactivity")
+
+        if df["ReviewScore"].values[0] < 3:
+            reasons.append("Low satisfaction")
+
+        if df["SessionTime"].values[0] < 100:
+            reasons.append("Low engagement")
+
+        if not reasons:
+            reasons.append("Stable engagement")
+
+        # 🔥 Action classification
+        action_data = generate_actions(pred, confidence)
+
+        # 🔥 LLM explanation (updated signature)
+        explanation = generate_explanation(
+            data=data,
+            prediction=prediction,
+            reasons=reasons,
+            confidence=confidence
+        )
+
         return {
-             "prediction": "Churn" if prediction == 1 else "No Churn",
-             "confidence": round(float(prob), 2),
-             "key_factors": reasons,
-             "recommended_actions": actions,
-             "llm_explanation": explanation
+            "prediction": prediction,
+            "confidence": round(confidence, 2),
+            "action_type": action_data["type"],
+            "recommended_actions": action_data["actions"],
+            "llm_explanation": explanation
         }
 
     except Exception as e:
-        return {
-            "error": str(e)
-        }
+        return {"error": str(e)}
