@@ -218,5 +218,3 @@ GitHub: [https://github.com/AvaniVJ](https://github.com/AvaniVJ)
 ---
 
 
-If you want next:
-👉 I’ll convert your **resume into a Cognizant-shortlist version (this is where you win)**
