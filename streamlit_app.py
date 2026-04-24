@@ -31,7 +31,6 @@ gender = st.selectbox("Gender", ["Male", "Female"])
 
 st.divider()
 
-# Predict button
 if st.button("🚀 Predict Churn"):
 
     input_data = {
@@ -51,24 +50,24 @@ if st.button("🚀 Predict Churn"):
 
     try:
         with st.spinner("Analyzing customer behavior..."):
-
-            # 🔥 Direct pipeline (no API)
             processed = preprocess_input(input_data)
             result = predict(processed)
 
         st.divider()
         st.subheader("📈 Prediction Result")
 
-        # Prediction
         if result.get("prediction") == "Churn":
             st.error("⚠️ Customer is likely to churn")
         else:
             st.success("✅ Customer is likely to stay")
 
-        # Confidence
         confidence = result.get("confidence", 0)
         st.write(f"**Confidence Score:** {confidence}")
         st.progress(float(confidence))
+
+        # 🔥 NEW: Action Type
+        st.subheader("📌 Action Strategy")
+        st.info(result.get("action_type", "N/A"))
 
         # Actions
         st.subheader("🎯 Recommended Actions")
@@ -82,6 +81,5 @@ if st.button("🚀 Predict Churn"):
     except Exception as e:
         st.error(f"❌ Error: {e}")
 
-# Footer
 st.divider()
 st.caption("🚀 Deployed AI decision system using ML + LLM reasoning")

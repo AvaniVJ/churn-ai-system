@@ -16,17 +16,15 @@ def load_model():
 def predict(df):
     model, scaler = load_model()
 
-    # Scale input
     X = scaler.transform(df)
 
-    # Prediction
     pred = model.predict(X)[0]
     prob = model.predict_proba(X)[0][1]
 
     prediction = "Churn" if pred == 1 else "No Churn"
     confidence = float(prob)
 
-    # 🔥 Basic reasoning (rule-based signals)
+    # 🔥 Reason extraction
     reasons = []
 
     if df["DaysSinceLastPurchase"].values[0] > 30:
@@ -41,6 +39,9 @@ def predict(df):
     if not reasons:
         reasons.append("Stable engagement")
 
+    # 🔥 Action classification
+    action_data = generate_actions(pred, confidence)
+
     # 🔥 LLM explanation
     explanation = generate_explanation(
         data=df.to_dict(orient="records")[0],
@@ -49,13 +50,11 @@ def predict(df):
         confidence=confidence
     )
 
-    # 🔥 Actions
-    actions = generate_actions(pred, confidence)
-
     result = {
         "prediction": prediction,
         "confidence": confidence,
-        "recommended_actions": actions,
+        "action_type": action_data["type"],
+        "recommended_actions": action_data["actions"],
         "llm_explanation": explanation
     }
 
@@ -65,26 +64,38 @@ def predict(df):
 def generate_actions(pred, confidence):
     if pred == 1:
         if confidence > 0.7:
-            return [
-                "Send personalized retention offer",
-                "Provide discount or loyalty incentive",
-                "Trigger immediate re-engagement campaign"
-            ]
+            return {
+                "type": "Retention",
+                "actions": [
+                    "Send personalized retention offer",
+                    "Provide discount or loyalty incentive",
+                    "Trigger immediate re-engagement campaign"
+                ]
+            }
         else:
-            return [
-                "Monitor customer behavior",
-                "Send targeted engagement communication",
-                "Offer limited-time incentives"
-            ]
+            return {
+                "type": "Engagement",
+                "actions": [
+                    "Monitor customer behavior",
+                    "Send targeted engagement communication",
+                    "Offer limited-time incentives"
+                ]
+            }
     else:
         if confidence < 0.4:
-            return [
-                "Customer is stable – no immediate action required",
-                "Maintain regular engagement"
-            ]
+            return {
+                "type": "None",
+                "actions": [
+                    "Customer is stable – no immediate retention action required",
+                    "Maintain regular engagement"
+                ]
+            }
         else:
-            return [
-                "Maintain engagement with regular updates",
-                "Explore upsell opportunities",
-                "Encourage referrals"
-            ]
+            return {
+                "type": "Growth",
+                "actions": [
+                    "Maintain engagement with regular updates",
+                    "Explore upsell opportunities",
+                    "Encourage referrals"
+                ]
+            }
