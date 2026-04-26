@@ -1,7 +1,7 @@
 
-# 🚀 AI Customer Retention Decision Engine
+# 🚀 AI Decision Intelligence System
 
-**Decision Intelligence System | ML + LLM**
+**Customer Retention Engine | ML + LLM**
 
 🚀 **Live Demo:**
 https://churn-ai-system-ktydllgenxpltcyirsarrr.streamlit.app/
