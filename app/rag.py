@@ -11,28 +11,36 @@ else:
 
 def generate_explanation(data, prediction, reasons, confidence):
     try:
+        # ---------------------------
+        # FALLBACK IF NO API KEY
+        # ---------------------------
         if client is None:
             return generate_fallback_explanation(prediction, confidence)
 
+        # ---------------------------
+        # 🔥 STRONG PROMPT (MODEL-GROUNDED)
+        # ---------------------------
         prompt = f"""
-        Prediction: {prediction}
-        Confidence: {confidence}
-        Key Factors: {", ".join(reasons)}
-        Customer Data: {data}
+Prediction: {prediction}
+Confidence: {round(confidence, 2)}
 
-        Tasks:
-        1. Explain why the customer is likely to churn or not.
-        2. If churn risk is high → suggest retention actions.
-        3. If churn risk is low → suggest engagement or no action.
-        4. If confidence is moderate (0.4–0.6) → suggest monitoring.
+Key Drivers:
+{", ".join(reasons)}
 
-        Keep response concise and business-focused.
-        """
+Customer Data:
+{data}
+
+Instructions:
+- Explain WHY this prediction occurred using key drivers
+- Highlight behavioral signals (engagement, inactivity, satisfaction)
+- Suggest business actions aligned with risk level
+- Keep it concise (2–3 lines max)
+"""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a business analyst."},
+                {"role": "system", "content": "You are a business-focused data analyst."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=120
@@ -45,13 +53,18 @@ def generate_explanation(data, prediction, reasons, confidence):
 
 
 def generate_fallback_explanation(prediction, confidence):
+    # ---------------------------
+    # RULE-BASED BACKUP
+    # ---------------------------
     if prediction == "Churn":
-        if confidence > 0.7:
-            return "Customer shows high churn risk. Immediate retention actions recommended."
+        if confidence > 0.75:
+            return "Customer shows high churn risk due to low engagement or inactivity. Immediate retention actions are recommended."
+        elif confidence > 0.5:
+            return "Customer shows moderate churn risk. Engagement campaigns and targeted offers can help reduce churn."
         else:
-            return "Customer shows moderate churn risk. Monitor and engage strategically."
+            return "Customer shows low-to-moderate churn signals. Monitor behavior and maintain engagement."
     else:
         if confidence < 0.4:
             return "Customer is stable with low churn risk. No immediate action required."
         else:
-            return "Customer is stable but should be monitored. Engagement and upsell opportunities can be explored."
+            return "Customer is stable but shows some risk signals. Maintain engagement and explore growth opportunities."
