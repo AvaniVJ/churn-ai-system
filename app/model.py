@@ -1,5 +1,4 @@
 import joblib
-import numpy as np
 from app.rag import generate_explanation
 
 model = None
@@ -10,10 +9,15 @@ feature_importance = None
 def load_model():
     global model, scaler, feature_importance
 
-    if model is None or scaler is None or feature_importance is None:
+    if model is None or scaler is None:
         model = joblib.load("models/churn_model.pkl")
         scaler = joblib.load("models/scaler.pkl")
-        feature_importance = joblib.load("models/feature_importance.pkl")
+
+        # 🔥 Safe load for feature importance
+        try:
+            feature_importance = joblib.load("models/feature_importance.pkl")
+        except:
+            feature_importance = None
 
     return model, scaler, feature_importance
 
@@ -21,10 +25,14 @@ def load_model():
 def predict(df):
     model, scaler, feature_importance = load_model()
 
-    # Scale input
+    # ---------------------------
+    # SCALE INPUT
+    # ---------------------------
     X = scaler.transform(df)
 
-    # Prediction
+    # ---------------------------
+    # PREDICTION
+    # ---------------------------
     pred = model.predict(X)[0]
     prob = model.predict_proba(X)[0][1]
 
@@ -32,7 +40,7 @@ def predict(df):
     confidence = float(prob)
 
     # ---------------------------
-    # 🔥 Risk Classification
+    # 🔥 RISK CLASSIFICATION
     # ---------------------------
     if prob > 0.75:
         risk = "High"
@@ -42,27 +50,29 @@ def predict(df):
         risk = "Low"
 
     # ---------------------------
-    # 🔥 Model-driven Reasons
+    # 🔥 MODEL-DRIVEN REASONS
     # ---------------------------
-    top_features = feature_importance.head(3)['feature'].values
-
     reasons = []
-    for feature in top_features:
-        if feature in df.columns:
-            value = df[feature].values[0]
-            reasons.append(f"{feature} = {round(float(value), 2)}")
 
-    # Fallback (edge case safety)
+    if feature_importance is not None:
+        top_features = feature_importance.head(3)['feature'].values
+
+        for feature in top_features:
+            if feature in df.columns:
+                value = df[feature].values[0]
+                reasons.append(f"{feature} = {round(float(value), 2)}")
+
+    # 🔥 Fallback if feature importance missing
     if not reasons:
-        reasons.append("Model-driven signals indicate stable behavior")
+        reasons.append("Model signals indicate customer behavior pattern")
 
     # ---------------------------
-    # 🔥 Action Strategy
+    # 🔥 ACTION STRATEGY
     # ---------------------------
     action_data = generate_actions(pred, confidence)
 
     # ---------------------------
-    # 🔥 LLM Explanation (grounded)
+    # 🔥 LLM EXPLANATION
     # ---------------------------
     explanation = generate_explanation(
         data=df.to_dict(orient="records")[0],
@@ -72,7 +82,7 @@ def predict(df):
     )
 
     # ---------------------------
-    # 🔥 Final Output
+    # 🔥 FINAL OUTPUT
     # ---------------------------
     result = {
         "prediction": prediction,
