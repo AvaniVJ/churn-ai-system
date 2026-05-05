@@ -1,31 +1,35 @@
 # 🚀 AI Customer Retention & Decision System
 
+🔗 **Live Demo**
+https://churn-ai-system-rm5wmbimflgywdsu69uxoq.streamlit.app/
+
 ---
 
 ## 🧠 Overview
 
-An end-to-end system that analyzes customer data to predict churn and convert predictions into actionable business strategies.
+An end-to-end AI system that predicts customer churn and converts predictions into actionable business strategies.
 
-Unlike traditional models that only predict churn, this system:
+Unlike traditional ML models that only output predictions, this system bridges the gap between **data science and decision-making** by combining:
 
-* Classifies customers based on risk level
-* Maps predictions to business strategies (Retention, Engagement, Growth)
-* Generates context-aware recommendations
-* Provides explanations using LLMs
+* Machine Learning (prediction)
+* Business logic (strategy)
+* Explainability (reasoning)
+* LLMs (context-aware insights)
 
 ---
 
 ## ⚡ Key Capabilities
 
-* 📊 Real-time customer analysis
-* 🎯 Strategy classification:
+* 📊 Real-time churn prediction
+* 🎯 Risk classification (Low / Medium / High)
+* 🧠 Model-driven + behavior-driven reasoning
+* 📌 Strategy mapping:
 
-  * Retention → High-risk customers
-  * Engagement → Moderate-risk customers
-  * Growth → Low-risk customers
-* 🧠 Context-aware action recommendations
-* 🤖 LLM-based explanations with fallback handling
-* ⚙️ Dual usage:
+  * **Retention** → High-risk customers
+  * **Engagement** → Medium-risk customers
+  * **Growth** → Low-risk customers
+* 🤖 LLM-based explanation with fallback safety
+* ⚙️ Dual interface:
 
   * Streamlit UI
   * FastAPI API
@@ -39,34 +43,47 @@ Unlike traditional models that only predict churn, this system:
 * Input validation and preprocessing
 * Feature transformation
 
+### 🔹 Feature Engineering Layer
+
+* EngagementScore = SessionTime × SpendingScore
+* AvgSpendPerSession = PurchaseAmount / SessionTime
+
 ### 🔹 Model Layer
 
-* Churn prediction using machine learning
-* Confidence-based classification
+* Random Forest classifier
+* Class imbalance handling
+* Confidence-based prediction
 
 ### 🔹 Decision Layer
 
-* Maps predictions to business strategies
-* Categorizes users into Retention, Engagement, or Growth
+* Converts predictions into risk levels
+* Applies business rules to refine outputs
+
+### 🔹 Reasoning Layer
+
+* Extracts top model features
+* Converts them into human-readable signals
+* Prioritizes behavioral drivers (engagement, inactivity, satisfaction)
 
 ### 🔹 Action Layer
 
-* Generates recommendations based on customer state
-* Ensures context-aware outputs
+* Maps risk → business strategies
+* Generates actionable recommendations
 
 ### 🔹 Explanation Layer
 
-* LLM-based reasoning using OpenAI API
-* Fallback-safe execution
+* LLM-based explanation (OpenAI API)
+* Fallback-safe rule-based reasoning
+* Ensures consistency with model outputs
 
 ### 🔹 Interface Layer
 
-* Streamlit UI for real-time interaction
+* Streamlit UI for interactive predictions
 
 ### 🔹 API Layer
 
 * FastAPI backend
-* `/predict` endpoint for integration
+* `/predict` endpoint
 
 ---
 
@@ -74,8 +91,8 @@ Unlike traditional models that only predict churn, this system:
 
 * Python
 * Pandas, NumPy, Scikit-learn
-* FastAPI
 * Streamlit
+* FastAPI
 * OpenAI API
 * Git & GitHub
 
@@ -83,103 +100,130 @@ Unlike traditional models that only predict churn, this system:
 
 ## 📁 Project Structure
 
+```
 churn-ai-system/
 │
 ├── app/
-│   ├── main.py        # FastAPI entry point
-│   ├── model.py       # ML model loading & inference
-│   ├── preprocess.py  # Data preprocessing
-│   ├── rag.py         # LLM reasoning logic
-│   ├── utils.py       # Helper functions
+│   ├── main.py
+│   ├── model.py
+│   ├── preprocess.py
+│   ├── rag.py
+│   ├── utils.py
 │
 ├── models/
 │   ├── churn_model.pkl
 │   ├── scaler.pkl
+│   ├── feature_importance.pkl
 │
 ├── data/
 │   └── churn.csv
 │
-├── streamlit_app.py   # Streamlit UI
-├── train.py           # Model training script
+├── streamlit_app.py
+├── train.py
 ├── requirements.txt
 └── README.md
+```
 
 ---
 
 ## 🚀 Run Locally
 
-git clone [https://github.com/AvaniVJ/churn-ai-system.git](https://github.com/AvaniVJ/churn-ai-system.git)
+```
+git clone https://github.com/AvaniVJ/churn-ai-system.git
 cd churn-ai-system
 
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate   # (Windows)
 
 pip install -r requirements.txt
+```
 
 ---
 
 ## ▶️ Run Application
 
-Streamlit UI
-streamlit run streamlit_app.py
-[http://localhost:8501](http://localhost:8501)
+### Streamlit UI
 
-FastAPI Backend
+```
+streamlit run streamlit_app.py
+```
+
+http://localhost:8501
+
+### FastAPI Backend
+
+```
 uvicorn app.main:app --reload
-[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+```
+
+http://127.0.0.1:8000/docs
 
 ---
 
 ## 🌐 API
 
-POST /predict
+### POST /predict
 
-Sample Input
-{
-"Age": 35,
-"Income": 50000
-}
+#### Sample Input
 
-Sample Output
+```json
 {
-"prediction": "Churn",
-"confidence": 0.55,
-"action_type": "Retention"
+  "Age": 35,
+  "Income": 50000,
+  "SpendingScore": 50
 }
+```
+
+#### Sample Output
+
+```json
+{
+  "prediction": "Churn",
+  "confidence": 0.68,
+  "risk_level": "High",
+  "action_type": "Retention"
+}
+```
 
 ---
 
 ## 💡 Design Highlights
 
-* Converts model predictions into actionable business decisions
-* Combines ML with rule-based logic and LLM reasoning
-* Ensures reliability using fallback handling
-* Supports both UI-based and API-based interaction
+* Converts ML predictions into **business decisions**
+* Combines:
+
+  * ML model
+  * Rule-based reasoning
+  * LLM explanation
+* Ensures **consistency between prediction, risk, and explanation**
+* Handles deployment issues like:
+
+  * Feature mismatch between training and inference
+  * Missing model artifacts
+* Built with **production thinking**, not just modeling
+
+---
+
+## ⚠️ Challenges Solved
+
+* Feature mismatch between training and inference pipelines
+* Inconsistent explanation vs prediction outputs
+* Low model accuracy handled using decision layer
+* Deployment debugging on Streamlit Cloud
 
 ---
 
 ## 🚀 Future Improvements
 
 * Advanced feature engineering
-* Cloud deployment (Docker, AWS)
-* Enhanced LLM reasoning pipeline
+* Model tuning / ensemble methods
 * Real-time data streaming
+* Docker + full cloud deployment
+* Explainability using SHAP
 
 ---
 
 ## 👩‍💻 Author
 
 Avani V J
-[https://github.com/AvaniVJ](https://github.com/AvaniVJ)
-
----
-
-## ⚡ One-Line Summary
-
-Built a full-stack system that predicts customer churn and generates actionable recommendations using ML, APIs, and LLM-based explanations.
-
----
-
-
-* Works on GitHub
-* Strong for ML + backend + product roles
+https://github.com/AvaniVJ
