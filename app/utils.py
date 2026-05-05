@@ -1,13 +1,29 @@
-def get_reason(data):
+def fallback_reason(data: dict):
+    """
+    Fallback reasoning logic.
+    Used only when model-driven explanation is unavailable.
+    """
+
     reasons = []
 
-    if data['SessionTime'] < 100:
-        reasons.append("Low engagement")
+    try:
+        # Safe extraction with defaults
+        session = float(data.get('SessionTime', 0))
+        inactivity = float(data.get('DaysSinceLastPurchase', 0))
+        review = float(data.get('ReviewScore', 5))
 
-    if data['DaysSinceLastPurchase'] > 30:
-        reasons.append("High inactivity")
+        # Simple heuristics
+        if session < 100:
+            reasons.append("Low engagement")
 
-    if data['ReviewScore'] < 3:
-        reasons.append("Low satisfaction")
+        if inactivity > 30:
+            reasons.append("High inactivity")
 
-    return reasons if reasons else ["Normal behavior"]
+        if review < 3:
+            reasons.append("Low satisfaction")
+
+    except Exception:
+        # Fail-safe
+        return ["Insufficient data for reasoning"]
+
+    return reasons if reasons else ["Stable behavior"]
