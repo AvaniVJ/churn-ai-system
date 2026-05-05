@@ -4,13 +4,17 @@ from app.preprocess import preprocess_input
 
 st.set_page_config(page_title="Churn AI System", layout="centered")
 
-# Title
+# ---------------------------
+# TITLE
+# ---------------------------
 st.title("📊 Customer Churn Intelligence System")
-st.markdown("Predict customer churn and generate actionable business insights.")
+st.markdown("Predict churn risk and generate actionable business strategies.")
 
 st.divider()
 
-# Inputs
+# ---------------------------
+# INPUTS
+# ---------------------------
 st.subheader("🧾 Enter Customer Details")
 
 col1, col2 = st.columns(2)
@@ -31,7 +35,9 @@ gender = st.selectbox("Gender", ["Male", "Female"])
 
 st.divider()
 
-# Predict
+# ---------------------------
+# PREDICTION
+# ---------------------------
 if st.button("🚀 Predict Churn"):
 
     input_data = {
@@ -46,43 +52,75 @@ if st.button("🚀 Predict Churn"):
         "Gender": gender
     }
 
-    st.write("📤 Processing input data...")
-    st.json(input_data)
-
     try:
-        with st.spinner("Analyzing customer behavior..."):
+        with st.spinner("🔍 Analyzing customer behavior..."):
             processed = preprocess_input(input_data)
             result = predict(processed)
 
         st.divider()
         st.subheader("📈 Prediction Result")
 
-        # Prediction
+        # ---------------------------
+        # PREDICTION RESULT
+        # ---------------------------
         if result.get("prediction") == "Churn":
             st.error("⚠️ High churn risk detected")
         else:
             st.success("✅ Customer is likely to stay")
 
-        # Confidence
+        # ---------------------------
+        # CONFIDENCE
+        # ---------------------------
         confidence = result.get("confidence", 0)
         st.write(f"**Confidence Score:** {confidence:.2f}")
         st.progress(float(confidence))
 
-        # 🔥 Action Strategy
+        # ---------------------------
+        # RISK LEVEL
+        # ---------------------------
+        st.write(f"**Risk Level:** {result.get('risk_level', 'N/A')}")
+
+        # ---------------------------
+        # 🔥 KEY DRIVERS (MOST IMPORTANT)
+        # ---------------------------
+        st.subheader("📊 Key Drivers")
+
+        top_factors = result.get("top_factors", [])
+        if top_factors:
+            for factor in top_factors:
+                st.write(f"• {factor}")
+        else:
+            st.write("No significant drivers identified")
+
+        # ---------------------------
+        # ACTION STRATEGY
+        # ---------------------------
         st.subheader("📌 Action Strategy")
         st.info(f"{result.get('action_type', 'N/A')} Strategy")
 
-        # Actions
+        # ---------------------------
+        # RECOMMENDED ACTIONS
+        # ---------------------------
         st.subheader("🎯 Recommended Actions")
-        for action in result.get("recommended_actions", []):
-            st.write(f"✔ {action}")
 
-        # Explanation
+        actions = result.get("recommended_actions", [])
+        if actions:
+            for action in actions:
+                st.write(f"✔ {action}")
+        else:
+            st.write("No actions available")
+
+        # ---------------------------
+        # LLM EXPLANATION
+        # ---------------------------
         st.subheader("🧠 AI Explanation")
         st.info(result.get("llm_explanation", "No explanation available"))
 
     except Exception as e:
         st.error(f"❌ Error: {e}")
 
+# ---------------------------
+# FOOTER
+# ---------------------------
 st.divider()
-st.caption("🚀 AI-powered decision system combining ML predictions with business strategy intelligence")
+st.caption("🚀 AI-powered system combining ML predictions, explainability, and decision intelligence")
