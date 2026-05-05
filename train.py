@@ -21,8 +21,8 @@ df['Gender'] = df['Gender'].replace({'M': 'Male', 'F': 'Female'})
 df['Gender'] = df['Gender'].map({'Male': 1, 'Female': 0})
 df['Gender'] = df['Gender'].fillna(0)
 
-# Fix Churn
-df['Churn'] = df['Churn'].replace({'Yes': 1, 'No': 0})
+# Fix Churn (clean version, no warning)
+df['Churn'] = df['Churn'].map({'Yes': 1, 'No': 0})
 
 # ---------------------------
 # NUMERIC CLEANING
@@ -54,7 +54,11 @@ df = df.drop(columns=['LastPurchaseDate'])
 # ---------------------------
 # 🔥 FEATURE ENGINEERING
 # ---------------------------
+# Engagement
 df['EngagementScore'] = df['SessionTime'] * df['SpendingScore']
+
+# Avg Spend per Session (NEW SIGNAL)
+df['AvgSpendPerSession'] = df['PurchaseAmount'] / (df['SessionTime'] + 1)
 
 # ---------------------------
 # FEATURES & TARGET
@@ -62,7 +66,8 @@ df['EngagementScore'] = df['SessionTime'] * df['SpendingScore']
 features = [
     'Age', 'Income', 'SpendingScore', 'PurchaseAmount',
     'DaysSinceLastPurchase', 'Returns', 'ReviewScore',
-    'SessionTime', 'Gender', 'EngagementScore'
+    'SessionTime', 'Gender',
+    'EngagementScore', 'AvgSpendPerSession'
 ]
 
 X = df[features]
@@ -83,11 +88,12 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 # ---------------------------
-# MODEL
+# MODEL (Improved)
 # ---------------------------
 model = RandomForestClassifier(
-    n_estimators=200,
-    max_depth=10,
+    n_estimators=300,
+    max_depth=12,
+    min_samples_split=5,
     class_weight='balanced',
     random_state=42
 )
