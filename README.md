@@ -1,8 +1,5 @@
 # 🚀 AI Customer Retention & Decision System
 
-🔗 **Live Demo:**
-[https://churn-ai-system-ktydllgenxpltcyirsarrr.streamlit.app/](https://churn-ai-system-ktydllgenxpltcyirsarrr.streamlit.app/)
-
 ---
 
 ## 🧠 Overview
